@@ -50,7 +50,7 @@ def get_modules():
 
   modules = []
   for filename in module_filenames:
-    spec = importlib.util.spec_from_file_location("main", filename)
+    spec = importlib.util.spec_from_file_location(filename[2:-3].replace('\\', '.'), filename)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     if hasattr(module, 'export') and is_module_valid(module.export):
