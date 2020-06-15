@@ -10,7 +10,7 @@ def applyPadding(name, num=15):
   return f"{' ' * (extra // 2 + extra % 2)}{name}{' ' * (extra // 2)}"
 
 logging.basicConfig(
-  level=logging.DEBUG,
+  level=logging.INFO,
   format='%(asctime)s [%(name)-15s | %(levelname)-8s]: %(message)s',
   datefmt='%d-%m-%y %H:%M:%S',
   filename='logs/current.log'
@@ -48,6 +48,7 @@ def get_modules():
     if pattern.match(subdir) and 'main.py' in files:
       module_filenames.append(os.path.join(subdir, 'main.py'))
 
+  master_logger.info('Initialising modules...')
   modules = []
   for filename in module_filenames:
     spec = importlib.util.spec_from_file_location(filename[2:-3].replace('\\', '.'), filename)
@@ -59,6 +60,7 @@ def get_modules():
   return modules
 
 if __name__ == "__main__":
+  master_logger.info('Initialising AutoHome server...')
   queue = Queue()
 
   for _ in range(NUM_TASK_THREADS):
@@ -67,7 +69,7 @@ if __name__ == "__main__":
 
   minutes_past = 0.0
   modules = get_modules()
-  master_logger.critical(f'Currently running {len(modules)} modules...')
+  master_logger.info(f"Currently running {len(modules)} module{'s' if len(modules) != 1 else ''}...")
   while True:
 
     for module in modules:
