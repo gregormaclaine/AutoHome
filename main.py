@@ -1,4 +1,4 @@
-import time, sys, os, re, importlib.util, traceback
+import time, sys, os, re, importlib.util
 import logging
 from threading import Thread
 from queue import Queue
