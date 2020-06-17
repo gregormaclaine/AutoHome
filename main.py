@@ -1,9 +1,9 @@
 import time, sys, os, re, importlib.util
 import logging
-from threading import Thread
 from queue import Queue
 
 from PhoneNotifications import Notifier
+from ModuleRunner import ModuleRunner
 
 def applyPadding(name, num=15):
   extra = num - len(name)
@@ -20,17 +20,6 @@ master_logger = logging.getLogger(applyPadding('MASTER'))
 master_logger.addHandler(logging.StreamHandler())
 
 testing_mode = len(sys.argv) > 1 and sys.argv[1] == 'test'
-
-NUM_TASK_THREADS = 1
-
-def complete_queue_tasks(queue):
-  while True:
-    module = queue.get()
-    master_logger.info(f'Running module: {module.NAME}')
-    try:
-      module.run()
-    except:
-      master_logger.error(f'There was an error running module: {module.NAME}', exc_info=True)
 
 def is_module_valid(module):
   return hasattr(module, 'OCCUR_EVERY') and \
@@ -62,26 +51,35 @@ def get_modules():
     
   return modules
 
+def close_server(mr):
+  master_logger.info('Closing Autohome server...')
+  mr.stop_workers()
+
 if __name__ == "__main__":
   master_logger.info('Initialising AutoHome server...')
   queue = Queue()
-
-  for _ in range(NUM_TASK_THREADS):
-    worker = Thread(target=complete_queue_tasks, args=(queue,))
-    worker.start()
+  mr = ModuleRunner(master_logger, queue)
 
   minutes_past = 0.0
   modules = get_modules()
   master_logger.info(f"Currently running {len(modules)} module{'s' if len(modules) != 1 else ''}...")
-  while True:
 
-    for module in modules:
-      if minutes_past % module.OCCUR_EVERY == 0:
-        queue.put(module)
+  try:
+    while True:
+      mr.fill_workers()
 
-    if testing_mode:
-      input('Press enter to pass 30 seconds...')
-    else:
-      print('Waiting 30 seconds...')
-      time.sleep(30)
-    minutes_past += 0.5
+      for module in modules:
+        if minutes_past % module.OCCUR_EVERY == 0:
+          queue.put(module)
+
+      if testing_mode:
+        input('Press enter to pass 30 seconds...')
+      else:
+        print('Waiting 30 seconds...')
+        time.sleep(30)
+      minutes_past += 0.5
+  except KeyboardInterrupt:
+    close_server(mr)
+  except Exception:
+    master_logger.critical(f'An error has occured running the AutoHome server...', exc_info=True)
+    close_server(mr)
