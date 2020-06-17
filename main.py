@@ -17,6 +17,7 @@ logging.basicConfig(
 )
 
 master_logger = logging.getLogger(applyPadding('MASTER'))
+master_logger.addHandler(logging.StreamHandler())
 
 testing_mode = len(sys.argv) > 1 and sys.argv[1] == 'test'
 
@@ -36,8 +37,10 @@ def is_module_valid(module):
     hasattr(module, 'run') and hasattr(module, 'NAME')
 
 def initialise_module(module_class):
+  logger = logging.getLogger(applyPadding(module_class.NAME))
+  logger.addHandler(logging.StreamHandler())
   return module_class(
-    logger=logging.getLogger(applyPadding(module_class.NAME)),
+    logger=logger,
     notifications=Notifier
   )
 
