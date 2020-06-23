@@ -95,9 +95,7 @@ class TelnetServer:
 
   def handle_command(self, line):
     command, *args = line.split(' ')
-    if line == '':
-      pass
-    elif line == 'help':
+    if line == 'help':
       for command, description in COMMAND_DESCRIPTIONS.items():
         self.send(f"{command}{(COMMAND_MAX_LENGTH - len(command)) * ' '}  - {description}\n\r")
     elif line == 'shutdown':
@@ -106,9 +104,10 @@ class TelnetServer:
       self.send(f"Unknown command: `{command}`")
 
   def on_receive(self, line):
-    if line != '': self.send('\r\n')
-    self.logger.info(f'Received command: `{line}`')
-    self.handle_command(line)
+    if line != '':
+      self.send('\r\n')
+      self.logger.info(f'Received command: `{line}`')
+      self.handle_command(line)
     self.send(f'\r\n{TelnetServer.COMMAND_PREFIX}')
 
   def listen(self):
