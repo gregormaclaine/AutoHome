@@ -54,6 +54,7 @@ def get_modules():
 def close_server(mr):
   master_logger.info('Closing Autohome server...')
   mr.stop_workers()
+  exit()
 
 if __name__ == "__main__":
   master_logger.info('Initialising AutoHome server...')
