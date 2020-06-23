@@ -7,3 +7,5 @@ The main server adds modules to a queue in the form of tasks every given multipl
 The worker threads are very robust; If one runs into an error, it is discarded and another worker is initialised.
 
 There is very detailed logging, both from the main server, but also minor loggers given down as parameters to each of the modules. All logs are found in the root folder in logs/ where the `current.log` can easily be switched out for archiving purposes.
+
+While the tasks are running, the server can also be accessed through a telnet socket. This socket can get information regarding the application processes and also control the server, such as telling it to shutdown.
