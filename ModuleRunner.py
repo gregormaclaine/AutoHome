@@ -20,9 +20,9 @@ def complete_queue_tasks(queue, logger, workers, num):
 class ModuleRunner:
   NUM_TASK_THREADS = 3
 
-  def __init__(self, master_logger, queue):
-    self.master_logger = master_logger
-    self.queue = queue
+  def __init__(self, parent):
+    self.master_logger = parent.logger
+    self.queue = parent.queue
 
     self.workers = []
     self.current_worker_num = 1
