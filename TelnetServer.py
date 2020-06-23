@@ -75,14 +75,17 @@ class TelnetServer:
       else:
         current += data
   
-  def confirm(self):
+  def prompt(self, question):
     if (self.conn is None) or (self.closing is not None):
       return None
-
-    self.send('Are you sure you want to do this? (y/n) >')
+    
+    self.send(question)
     data = self.receive_full()
     self.send('\r\n')
-    return data == 'y'
+    return data
+
+  def confirm(self):
+    return self.prompt('Are you sure you want to do this? (y/n) >') == 'y'
     
   def close(self):
     self.logger.info('Closing TelnetServer...')
