@@ -1,7 +1,7 @@
 class Command:
   def __init__(self, name, description=None, function=None):
     self.name = name
-    self.description = description
+    self._description = description
     self.function = function
 
     self.parent = None
@@ -17,10 +17,22 @@ class Command:
         if sub_command.name == args[0]:
           return sub_command(octrl, *args[1:])
       else:
-        return octrl.send(f'Unknown command: `{self.full_name} {args[0]}`')
+        if self.function is None:
+          return octrl.send(f'Unknown command: `{self.full_name} {args[0]}`')
     if self.function is not None:
-      return self.function(octrl, *args)
-  
+      self.function(octrl, *args)
+    else:
+      octrl.send(self.full_description + '\n\r')
+
+  @property
+  def description(self):
+    if not self.is_group: return self._description
+    return self._description if self._description is not None else 'A collection of sub-commands'
+
+  @description.setter
+  def description(self, value):
+    self._description = value
+
   @property
   def full_name(self):
     if self.parent is None: return self.name
@@ -34,11 +46,20 @@ class Command:
   def full_description(self):
     if not self.is_group: return self.description
 
-    short_description = self.description if self.description is not None else 'A collection of sub-commands'
     max_name_length = max(map(lambda x: len(x.name), self.sub_commands))
     sub_descriptions = [f"{c.name}{(max_name_length - len(c.name)) * ' '}  - {c.description}" for c in self.sub_commands]
     with_prefix = [f"{self.full_name} {desc}" for desc in sub_descriptions]
-    return short_description + '\n\nCommands:\n' + '\n  '.join(with_prefix)
+    return self.description + '\n\n\rCommands:\n' + '\n\r '.join(with_prefix)
+  
+  def help(self, names):
+    if len(names) == 0:
+      return self.full_description
+    
+    for sub_command in self.sub_commands:
+      if sub_command.name == names[0]:
+        return sub_command.help(names[1:])
+    else:
+      return f"Unknown command: `{self.full_name} {names[0]}`"
 
 
 def add_command(parent, names, func, to_root=False):

@@ -9,25 +9,32 @@ def command(*names):
   return decorator_command
 
 @command('help')
-def help(octrl):
+def help(octrl, *args):
   """Gives a brief description of all commands"""
-  max_length = max(map(lambda x: len(x.name), commands))
-  for command in commands:
-    octrl.send(f"{command.name}{(max_length - len(command.name)) * ' '}  - {command.description}\n\r")
+  if len(args) == 0:
+    max_length = max(map(lambda x: len(x.name), commands))
+    for command in commands:
+      octrl.send(f"{command.name}{(max_length - len(command.name)) * ' '}  - {command.description}\n\r")
+  else:
+    for command in commands:
+      if command.name == args[0]:
+        return octrl.send(command.help(args[1:]))
+    else:
+      octrl.send(f"Unknown command: `{args[0]}`")
 
 @command('shutdown')
-def shutdown(octrl):
+def shutdown(octrl, *args):
   """Closes AutoHome server application"""
   if octrl.confirm():
     octrl.server.parent.close_server()
 
 @command('quit')
-def quit(octrl):
+def quit(octrl, *args):
   """Closes current server connection"""
   pass
 
 @command('modules', 'list')
-def list_modules(octrl):
+def list_modules(octrl, *args):
   """Lists the all modules found and their status"""
   modules = octrl.server.parent.modules
   bad_modules = octrl.server.parent.bad_modules
