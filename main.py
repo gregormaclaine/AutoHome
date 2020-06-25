@@ -57,25 +57,25 @@ class Main:
     )
 
   def get_modules(self):
-    pattern = re.compile(r'^.\\modules\\[^\\]+$')
+    pattern = re.compile(f'^.{os.path.sep}modules{os.path.sep}[^{os.path.sep}]+$')
     module_filenames = []
     for subdir, _, files in os.walk(os.path.join(os.curdir, 'modules')):
       if pattern.match(subdir):
         if 'main.py' in files:
           module_filenames.append(os.path.join(subdir, 'main.py'))
         else:
-          self.bad_modules.append((subdir.split('\\')[-1], 'No main.py file'))
+          self.bad_modules.append((subdir.split(os.path.sep)[-1], 'No main.py file'))
 
     self.logger.info('Initialising modules...')
     self.modules = []
     for filename in module_filenames:
-      spec = importlib.util.spec_from_file_location(filename[2:-3].replace('\\', '.'), filename)
+      spec = importlib.util.spec_from_file_location(filename[2:-3].replace(os.path.sep, '.'), filename)
       module = importlib.util.module_from_spec(spec)
       spec.loader.exec_module(module)
       if not hasattr(module, 'export'):
-        self.bad_modules.append((filename.split('\\')[-2], 'No exported class in main.py'))
+        self.bad_modules.append((filename.split(os.path.sep)[-2], 'No exported class in main.py'))
       elif not Main.is_module_valid(module.export):
-        self.bad_modules.append((filename.split('\\')[-2], 'Exported module is invalid'))
+        self.bad_modules.append((filename.split(os.path.sep)[-2], 'Exported module is invalid'))
       else:
         self.modules.append(Main.initialise_module(module.export))
     
