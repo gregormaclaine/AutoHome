@@ -66,8 +66,11 @@ class TelnetServer:
       elif data == '\n':
         return current
       elif data == '\b':
-        current = current[:-1]
-        self.send(' \b')
+        if current != '':
+          current = current[:-1]
+          self.send(' \b')
+        else:
+          self.send(TelnetServer.COMMAND_PREFIX[-1])
       else:
         current += data
   
