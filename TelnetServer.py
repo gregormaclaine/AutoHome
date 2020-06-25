@@ -91,10 +91,10 @@ class TelnetServer:
 
   def on_receive(self, line):
     if line != '':
-      self.send('\r\n')
       self.logger.info(f'Received command: `{line}`')
       self.out.handle_command(line)
-    self.send(f'\r\n{TelnetServer.COMMAND_PREFIX}')
+      self.send('\r\n')
+    self.send(f'{TelnetServer.COMMAND_PREFIX}')
 
   def listen(self):
     self.socket.listen(1)

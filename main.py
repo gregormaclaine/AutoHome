@@ -32,6 +32,7 @@ class Main:
     self.server = TelnetServer(self)
 
     self.modules = []
+    self.bad_modules = []
     self.get_modules()
     self.logger.info(f"Currently running {len(self.modules)} module{'s' if len(self.modules) != 1 else ''}...")
 
@@ -59,8 +60,11 @@ class Main:
     pattern = re.compile(r'^.\\modules\\[^\\]+$')
     module_filenames = []
     for subdir, _, files in os.walk(os.path.join(os.curdir, 'modules')):
-      if pattern.match(subdir) and 'main.py' in files:
-        module_filenames.append(os.path.join(subdir, 'main.py'))
+      if pattern.match(subdir):
+        if 'main.py' in files:
+          module_filenames.append(os.path.join(subdir, 'main.py'))
+        else:
+          self.bad_modules.append((subdir.split('\\')[-1], 'No main.py file'))
 
     self.logger.info('Initialising modules...')
     self.modules = []
@@ -68,8 +72,15 @@ class Main:
       spec = importlib.util.spec_from_file_location(filename[2:-3].replace('\\', '.'), filename)
       module = importlib.util.module_from_spec(spec)
       spec.loader.exec_module(module)
-      if hasattr(module, 'export') and Main.is_module_valid(module.export):
+      if not hasattr(module, 'export'):
+        self.bad_modules.append((filename.split('\\')[-2], 'No exported class in main.py'))
+      elif not Main.is_module_valid(module.export):
+        self.bad_modules.append((filename.split('\\')[-2], 'Exported module is invalid'))
+      else:
         self.modules.append(Main.initialise_module(module.export))
+    
+    for module_name, reason in self.bad_modules:
+      self.logger.warning(f'Installed module `{module_name}` cannot be loaded: {reason}')
       
   def close_server(self):
     self.logger.info('Closing Autohome server...')
