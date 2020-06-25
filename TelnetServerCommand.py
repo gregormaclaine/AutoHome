@@ -49,7 +49,7 @@ class Command:
     max_name_length = max(map(lambda x: len(x.name), self.sub_commands))
     sub_descriptions = [f"{c.name}{(max_name_length - len(c.name)) * ' '}  - {c.description}" for c in self.sub_commands]
     with_prefix = [f"{self.full_name} {desc}" for desc in sub_descriptions]
-    return self.description + '\n\n\rCommands:\n' + '\n\r '.join(with_prefix)
+    return self.description + '\n\n\rCommands:\n\r   ' + '\n\r   '.join(with_prefix)
   
   def help(self, names):
     if len(names) == 0:

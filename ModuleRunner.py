@@ -7,11 +7,11 @@ def complete_queue_tasks(queue, logger, workers, num):
       if module is None:
         logger.info(f'Thread-{num} closing...')
         break
-      logger.info(f'Running module: {module.NAME}')
+      logger.info(f'Running module: {module.base_class.NAME}')
       try:
-        module.run()
+        module()
       except:
-        logger.error(f'There was an error running module: {module.NAME}', exc_info=True)
+        logger.error(f'There was an error running module: {module.base_class.NAME}', exc_info=True)
   except Exception:
     logger.critical(f'An error occured in Thread-{num}', exc_info=True)
     workers.remove(current_thread())

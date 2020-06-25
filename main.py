@@ -2,7 +2,7 @@ import time, sys, os, re, importlib.util
 import logging
 from queue import Queue
 
-from PhoneNotifications import Notifier
+from Module import Module, ModuleStatus
 from ModuleRunner import ModuleRunner
 from TelnetServer import TelnetServer
 
@@ -39,25 +39,14 @@ class Main:
     self.mainloop()
 
   @staticmethod
-  def is_module_valid(module):
-    return hasattr(module, 'OCCUR_EVERY') and \
-      hasattr(module, 'run') and hasattr(module, 'NAME')
-
-  @staticmethod
   def create_logger(name):
     logger = logging.getLogger(applyPadding(name.upper()))
     logger.addHandler(logging.StreamHandler())
     return logger
 
-  @staticmethod
-  def initialise_module(module_class):
-    return module_class(
-      logger=Main.create_logger(module_class.NAME),
-      notifications=Notifier
-    )
-
   def get_modules(self):
-    pattern = re.compile(f'^.{os.path.sep}modules{os.path.sep}[^{os.path.sep}]+$')
+    x = '/' if os.path.sep == '/' else r'\\'
+    pattern = re.compile(f'^.{x}modules{x}[^{x}]+$')
     module_filenames = []
     for subdir, _, files in os.walk(os.path.join(os.curdir, 'modules')):
       if pattern.match(subdir):
@@ -74,10 +63,10 @@ class Main:
       spec.loader.exec_module(module)
       if not hasattr(module, 'export'):
         self.bad_modules.append((filename.split(os.path.sep)[-2], 'No exported class in main.py'))
-      elif not Main.is_module_valid(module.export):
+      elif not Module.is_valid(module.export):
         self.bad_modules.append((filename.split(os.path.sep)[-2], 'Exported module is invalid'))
       else:
-        self.modules.append(Main.initialise_module(module.export))
+        self.modules.append(Module(module.export, Main.create_logger(module.export.NAME)))
     
     for module_name, reason in self.bad_modules:
       self.logger.warning(f'Installed module `{module_name}` cannot be loaded: {reason}')
@@ -97,7 +86,7 @@ class Main:
         self.mr.fill_workers()
 
         for module in self.modules:
-          if minutes_past % module.OCCUR_EVERY == 0:
+          if module.status == ModuleStatus.RUNNING and minutes_past % module.base_class.OCCUR_EVERY == 0:
             self.queue.put(module)
 
         if testing_mode:
