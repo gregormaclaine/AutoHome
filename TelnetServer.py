@@ -1,20 +1,16 @@
 import socket
 from threading import Thread
 
-COMMAND_DESCRIPTIONS = {
-  'help': 'Gives a brief description of all commands',
-  'quit': 'Closes server connection',
-  'shutdown': 'Close AutoHome server application'
-}
-COMMAND_MAX_LENGTH = max(map(len, COMMAND_DESCRIPTIONS.keys()))
+from TelnetServerOutputController import TelnetServerOutputController
 
 class TelnetServer:
   PORT = 23
   COMMAND_PREFIX = 'AutoHome >'
 
-  def __init__(self, parent, mr):
+  def __init__(self, parent):
     self.parent = parent
-    self.mr = mr
+
+    self.out = TelnetServerOutputController(self)
 
     self.logger = parent.__class__.create_logger('TELNETSERVER')
 
@@ -93,21 +89,11 @@ class TelnetServer:
       self.conn.shutdown(socket.SHUT_RDWR)
     self.socket.close()
 
-  def handle_command(self, line):
-    command, *args = line.split(' ')
-    if line == 'help':
-      for command, description in COMMAND_DESCRIPTIONS.items():
-        self.send(f"{command}{(COMMAND_MAX_LENGTH - len(command)) * ' '}  - {description}\n\r")
-    elif line == 'shutdown':
-      if self.confirm(): self.parent.close_server()
-    else:
-      self.send(f"Unknown command: `{command}`")
-
   def on_receive(self, line):
     if line != '':
       self.send('\r\n')
       self.logger.info(f'Received command: `{line}`')
-      self.handle_command(line)
+      self.out.handle_command(line)
     self.send(f'\r\n{TelnetServer.COMMAND_PREFIX}')
 
   def listen(self):

@@ -29,7 +29,7 @@ class Main:
     self.logger.info('Initialising AutoHome server...')
     self.queue = Queue()
     self.mr = ModuleRunner(self)
-    self.server = TelnetServer(self, self.mr)
+    self.server = TelnetServer(self)
 
     self.modules = []
     self.get_modules()
