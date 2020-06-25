@@ -19,7 +19,7 @@ def help(octrl, *args):
   else:
     for command in commands:
       if command.name == args[0]:
-        return octrl.send(command.help(args[1:]))
+        return octrl.send(command.help(args[1:]) + '\n\r')
     else:
       octrl.send(f"Unknown command: `{args[0]}`")
 
