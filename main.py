@@ -6,12 +6,8 @@ from Module import Module, ModuleStatus
 from ModuleRunner import ModuleRunner
 from TelnetServer import TelnetServer
 
-logging.basicConfig(
-  level=logging.INFO,
-  format='%(asctime)s [%(name)-15s | %(levelname)-8s]: %(message)s',
-  datefmt='%d-%m-%y %H:%M:%S',
-  filename='logs/current.log'
-)
+import Logging
+Logging.init()
 
 def applyPadding(name, num=15):
   extra = num - len(name)
@@ -21,8 +17,7 @@ testing_mode = len(sys.argv) > 1 and sys.argv[1] == 'test'
 
 class Main:
   def __init__(self):
-    self.logger = logging.getLogger(applyPadding('MASTER'))
-    self.logger.addHandler(logging.StreamHandler())
+    self.logger = Logging.create_logger('MASTER')
 
     self.closing = False
 
@@ -37,12 +32,6 @@ class Main:
     self.logger.info(f"Currently running {len(self.modules)} module{'s' if len(self.modules) != 1 else ''}...")
 
     self.mainloop()
-
-  @staticmethod
-  def create_logger(name):
-    logger = logging.getLogger(applyPadding(name.upper()))
-    logger.addHandler(logging.StreamHandler())
-    return logger
 
   def get_modules(self):
     x = '/' if os.path.sep == '/' else r'\\'
@@ -66,7 +55,7 @@ class Main:
       elif not Module.is_valid(module.export):
         self.bad_modules.append((filename.split(os.path.sep)[-2], 'Exported module is invalid'))
       else:
-        self.modules.append(Module(module.export, Main.create_logger(module.export.NAME)))
+        self.modules.append(Module(module.export, Logging.create_logger(module.export.NAME)))
     
     for module_name, reason in self.bad_modules:
       self.logger.warning(f'Installed module `{module_name}` cannot be loaded: {reason}')
