@@ -5,15 +5,13 @@ from queue import Queue
 from Module import Module, ModuleStatus
 from ModuleRunner import ModuleRunner
 from TelnetServer import TelnetServer
-
 import Logging
-Logging.init()
 
-def applyPadding(name, num=15):
-  extra = num - len(name)
-  return f"{' ' * (extra // 2 + extra % 2)}{name}{' ' * (extra // 2)}"
+def has_flags(*flags):
+  return any([flag in sys.argv[1:] for flag in flags])
 
-testing_mode = len(sys.argv) > 1 and sys.argv[1] == 'test'
+testing_mode = has_flags('--test', '-t')
+Logging.init(has_flags('--new', '-n'))
 
 class Main:
   def __init__(self):
