@@ -2,7 +2,7 @@ import socket
 from threading import Thread
 
 from TelnetServerOutputController import TelnetServerOutputController
-import Logging
+import LogManager
 
 class TelnetServer:
   PORT = 23
@@ -13,7 +13,7 @@ class TelnetServer:
 
     self.out = TelnetServerOutputController(self)
 
-    self.logger = Logging.create_logger('TELNETSERVER')
+    self.logger = LogManager.create_logger('TELNETSERVER')
 
     self.conn = None
     self.closing = None  # None | 'server' | 'connection'

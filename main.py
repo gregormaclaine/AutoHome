@@ -1,21 +1,20 @@
 import time, sys, os, re, importlib.util
-import logging
 from queue import Queue
 
 from Module import Module, ModuleStatus
 from ModuleRunner import ModuleRunner
 from TelnetServer import TelnetServer
-import Logging
+import LogManager
 
 def has_flags(*flags):
   return any([flag in sys.argv[1:] for flag in flags])
 
 testing_mode = has_flags('--test', '-t')
-Logging.init(has_flags('--new', '-n'))
+LogManager.init(has_flags('--new', '-n'))
 
 class Main:
   def __init__(self):
-    self.logger = Logging.create_logger('MASTER')
+    self.logger = LogManager.create_logger('MASTER')
 
     self.closing = False
 
@@ -53,7 +52,7 @@ class Main:
       elif not Module.is_valid(module.export):
         self.bad_modules.append((filename.split(os.path.sep)[-2], 'Exported module is invalid'))
       else:
-        self.modules.append(Module(module.export, Logging.create_logger(module.export.NAME)))
+        self.modules.append(Module(module.export, LogManager.create_logger(module.export.NAME)))
     
     for module_name, reason in self.bad_modules:
       self.logger.warning(f'Installed module `{module_name}` cannot be loaded: {reason}')
