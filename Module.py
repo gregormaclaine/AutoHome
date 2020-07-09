@@ -1,3 +1,6 @@
+from threading import Thread
+
+import LogManager
 from PhoneNotifications import Notifier
 
 class ModuleStatus:
@@ -5,18 +8,33 @@ class ModuleStatus:
   PAUSED = 'Paused'
 
 class Module:
-  def __init__(self, base_class, logger):
-    self.base_class = base_class
-
+  def __init__(self, control, base_class):
+    self.control = control
     self.module = base_class(
-      logger=logger,
+      logger=LogManager.create_logger(base_class.NAME),
       notifications=Notifier
     )
+    self.name = self.module.NAME
 
     self.status = ModuleStatus.RUNNING
+    self.thread = None
   
+  def should_occur(self, minutes_past):
+    return minutes_past % self.module.OCCUR_EVERY == 0
+
   def __call__(self):
-    self.module.run()
+    self.thread = Thread(target=self.run, name=f'Module-Thread ({self.module.NAME})')
+    self.thread.start()
+  
+  def run(self):
+    if self.status != ModuleStatus.RUNNING: return
+    self.control.logger.info(f'Running module: {self.module.NAME}')
+    try:
+      self.module.run()
+    except:
+      self.control.logger.error(f'There was an error running module: {self.module.NAME}', exc_info=True)
+    
+    self.thread = None
 
   @staticmethod
   def is_valid(module):
