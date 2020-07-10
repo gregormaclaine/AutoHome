@@ -20,14 +20,13 @@ class Module:
     self.thread = None
   
   def should_occur(self, minutes_past):
-    return minutes_past % self.module.OCCUR_EVERY == 0
+    return minutes_past % self.module.OCCUR_EVERY == 0 and self.status == ModuleStatus.RUNNING
 
   def __call__(self):
     self.thread = Thread(target=self.run, name=f'Module-Thread ({self.module.NAME})')
     self.thread.start()
   
   def run(self):
-    if self.status != ModuleStatus.RUNNING: return
     self.control.logger.info(f'Running module: {self.module.NAME}')
     try:
       self.module.run()

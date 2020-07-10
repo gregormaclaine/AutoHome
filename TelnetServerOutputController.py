@@ -88,22 +88,22 @@ def pause_module(octrl, index, *args):
   """Pauses a running module (Takes the module index)"""
   change_module_status(octrl, index, ModuleStatus.PAUSED)
 
-# @command('modules', 'run')
-# def run_module(octrl, index, *args):
-#   """Run a certain module once independantly of clock"""
-#   try:
-#     index = int(index) - 1
-#   except ValueError:
-#     return octrl.send(f'Error: `{index}` is not an integer index\n\r')
+@command('modules', 'run')
+def run_module(octrl, index, *args):
+  """Run a certain module once independantly of clock"""
+  try:
+    index = int(index) - 1
+  except ValueError:
+    return octrl.send(f'Error: `{index}` is not an integer index\n\r')
 
-#   try:
-#     module = octrl.server.parent.mr.modules[index]
-#   except IndexError:
-#     return octrl.send(f'Error: Index out of range\n\r')
+  try:
+    module = octrl.server.parent.mr.modules[index]
+  except IndexError:
+    return octrl.send(f'Error: Index out of range\n\r')
 
-#   octrl.server.logger.info(f'Adding module `{module.name}` to queue...')
-#   octrl.server.parent.queue.put(module)
-#   octrl.send(f'Module `{module.name}` added to queue')
+  octrl.server.logger.info(f'Attempting to run module `{module.name}`...')
+  octrl.send(f'Attempting to run module `{module.name}`...')
+  octrl.server.parent.mr.run_module(module)
 
 class TelnetServerOutputController:
   def __init__(self, server):

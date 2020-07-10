@@ -78,9 +78,12 @@ class ModuleRunner:
 
   def run_modules(self, minutes_past):
     for module in [m for m in self.modules if m.should_occur(minutes_past)]:
-      if self.can_start_new_thread:
-        module()
-      else:
-        self.logger.warning(f'Max module threads reached. Adding `{module.name}` to backlog...')
-        self.backlog.put(module)
-        self.start_backlog()
+      self.run_module(module)
+
+  def run_module(self, module):
+    if self.can_start_new_thread:
+      module()
+    else:
+      self.logger.warning(f'Max module threads reached. Adding `{module.name}` to backlog...')
+      self.backlog.put(module)
+      self.start_backlog()
