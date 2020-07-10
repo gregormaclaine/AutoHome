@@ -1,8 +1,6 @@
 from TelnetServerCommand import Command, add_command
 from Module import ModuleStatus
 
-commands = []
-
 def format_columns(strf, rows, *getters):
   rows = list(rows)
   if len(getters) != strf.count('_'):
@@ -18,6 +16,7 @@ def format_columns(strf, rows, *getters):
   
   return '\n\r'.join(formatted_rows)
 
+commands = []
 def command(*names):
   def decorator_command(func):
     add_command(commands, names, func, True)
@@ -79,12 +78,9 @@ def list_modules(octrl, *args):
 
 def change_module_status(octrl, index, status):
   try:
-    index = int(index) - 1
+    module = octrl.server.parent.mr.modules[int(index) - 1]
   except ValueError:
     return octrl.send(f'Error: `{index}` is not an integer index\n\r')
-
-  try:
-    module = octrl.server.parent.mr.modules[index]
   except IndexError:
     return octrl.send(f'Error: Index out of range\n\r')
 
@@ -106,12 +102,9 @@ def pause_module(octrl, index, *args):
 def run_module(octrl, index, *args):
   """Run a certain module once independantly of clock"""
   try:
-    index = int(index) - 1
+    module = octrl.server.parent.mr.modules[int(index) - 1]
   except ValueError:
     return octrl.send(f'Error: `{index}` is not an integer index\n\r')
-
-  try:
-    module = octrl.server.parent.mr.modules[index]
   except IndexError:
     return octrl.send(f'Error: Index out of range\n\r')
 
