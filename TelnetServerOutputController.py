@@ -3,6 +3,21 @@ from Module import ModuleStatus
 
 commands = []
 
+def format_columns(strf, rows, *getters):
+  rows = list(rows)
+  if len(getters) != strf.count('_'):
+    raise Exception('Number of columns does not match number of getters')
+
+  max_lengths = [max(map(lambda row: len(str(getter(row))), rows)) for getter in getters]
+
+  formatted_rows = [strf for _ in rows]
+  for row_num, row in enumerate(rows):
+    for i, getter in enumerate(getters):
+      s = str(getter(row)) + (max_lengths[i] - len(str(getter(row)))) * ' '
+      formatted_rows[row_num] = formatted_rows[row_num].replace('_', s, 1)
+  
+  return '\n\r'.join(formatted_rows)
+
 def command(*names):
   def decorator_command(func):
     add_command(commands, names, func, True)
@@ -50,18 +65,17 @@ def list_modules(octrl, *args):
 
   one = len(modules) == 1
   octrl.send(f"There {'is' if one else 'are'} {len(modules) if len(modules) > 0 else 'no'} valid module{'' if one else 's'} installed:\n\n\r")
-  if len(modules) > 0:
-    max_module_length = max(map(lambda m: len(m.name), modules))
-    for i, m in enumerate(modules):
-      num = str(i+1).zfill(2 if len(modules) > 9 else 1)
-      octrl.send(f"  ({num}) {m.name}{(max_module_length - len(m.name)) * ' '}  | {m.status}\n\r")
+  if len(modules) > 0:    
+    s = format_columns('  (_) _  | _ | _ |', enumerate(modules),
+      lambda r: r[0] + 1, lambda r: r[1].name, lambda r: r[1].status, lambda r: r[1].time_since_last_run)
+    octrl.send(s + '\n\r')
   
   if len(bad_modules) > 0:
     one = len(bad_modules) == 1
     octrl.send(f"\nThere {'is' if one else 'are'} {len(bad_modules)} invalid folder{'' if one else 's'} in the modules directory:\n\n\r")
-    max_bad_module_length = max(map(lambda bm: len(bm[0]), bad_modules))
-    for folder, reason in bad_modules:
-      octrl.send(f"  {folder}{(max_bad_module_length - len(folder)) * ' '}  | {reason}\n\r")
+    s = format_columns('  _  | _', bad_modules,
+      lambda r: r[0], lambda r: r[1])
+    octrl.send(s + '\n\r')
 
 def change_module_status(octrl, index, status):
   try:
