@@ -17,8 +17,8 @@ class Main:
     self.closing = False
 
     self.logger.info('Initialising AutoHome server...')
-    self.mr = ModuleRunner(self)
     self.server = TelnetServer(self)
+    self.mr = ModuleRunner(self)
 
     self.mainloop()
       
