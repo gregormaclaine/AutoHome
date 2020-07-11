@@ -4,6 +4,9 @@ from threading import Thread
 from TelnetServerOutputController import TelnetServerOutputController
 import LogManager
 
+with open('art.txt', 'r') as f:
+  art = f.read()
+
 class TelnetServer:
   PORT = 23
   COMMAND_PREFIX = 'AutoHome >'
@@ -114,6 +117,7 @@ class TelnetServer:
       except OSError:
         break
       with self.conn:
+        self.send(art.replace('\n', '\n\r') + '\n\n\r')
         self.send(TelnetServer.COMMAND_PREFIX)
         self.logger.info(f'New connection opened with {addr}')
         while True:
