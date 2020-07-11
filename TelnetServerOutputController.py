@@ -6,14 +6,16 @@ def format_columns(strf, rows, *getters):
   if len(getters) != strf.count('_'):
     raise Exception('Number of columns does not match number of getters')
 
+  strf_parts = strf.split('_')
   max_lengths = [max(map(lambda row: len(str(getter(row))), rows)) for getter in getters]
 
-  formatted_rows = [strf for _ in rows]
-  for row_num, row in enumerate(rows):
-    for i, getter in enumerate(getters):
-      s = str(getter(row)) + (max_lengths[i] - len(str(getter(row)))) * ' '
-      formatted_rows[row_num] = formatted_rows[row_num].replace('_', s, 1)
-  
+  formatted_rows = []
+  for row in rows:
+    column_values = [str(getter(row)) for getter in getters]
+    spaced_values = [v + (max_lengths[i] - len(v)) * ' ' for i, v in enumerate(column_values)]
+    row_line = ''.join([a + b for a, b in zip(strf_parts, spaced_values)]) + strf_parts[-1]
+    formatted_rows.append(row_line)
+
   return '\n\r'.join(formatted_rows)
 
 commands = []
@@ -62,9 +64,12 @@ def list_modules(octrl, *args):
   if len(modules) == 0 and len(bad_modules) == 0:
     return octrl.send('There are no installed modules\n')
 
-  one = len(modules) == 1
-  octrl.send(f"There {'is' if one else 'are'} {len(modules) if len(modules) > 0 else 'no'} valid module{'' if one else 's'} installed:\n\n\r")
-  if len(modules) > 0:    
+  if len(modules) == 0:
+    octrl.send(f"There are no valid modules installed.\n\r")
+  else:
+    one = len(modules) == 1
+    octrl.send(f"There {'is' if one else 'are'} {len(modules)} valid module{'' if one else 's'} installed:\n\n\r")
+  
     s = format_columns('  (_) _  | _ | _ |', enumerate(modules),
       lambda r: r[0] + 1, lambda r: r[1].name, lambda r: r[1].status, lambda r: r[1].time_since_last_run)
     octrl.send(s + '\n\r')
@@ -72,6 +77,7 @@ def list_modules(octrl, *args):
   if len(bad_modules) > 0:
     one = len(bad_modules) == 1
     octrl.send(f"\nThere {'is' if one else 'are'} {len(bad_modules)} invalid folder{'' if one else 's'} in the modules directory:\n\n\r")
+    
     s = format_columns('  _  | _', bad_modules,
       lambda r: r[0], lambda r: r[1])
     octrl.send(s + '\n\r')
