@@ -1,9 +1,8 @@
-from threading import Thread
-import os, re, importlib.util, time
-from queue import Queue
+import os, re, importlib.util
 
 import LogManager
 from Module import Module
+from ModuleThreadHandler import ModuleThreadHandler, ThreadTask
 
 class ModuleRunner:
   MAX_THREADS = 3
@@ -14,8 +13,7 @@ class ModuleRunner:
 
     self.closing = False
 
-    self.backlog = Queue()
-    self.backlog_thread = None
+    self.thread_handler = ModuleThreadHandler(self.logger)
 
     self.logger.info('Initialising modules...')
     self.get_modules()
@@ -23,28 +21,8 @@ class ModuleRunner:
     self.logger.info(f"Currently running {len(self.modules)} module{'s' if len(self.modules) != 1 else ''}...")
   
   def close(self):
+    self.thread_handler.close()
     self.closing = True
-  
-  @property
-  def can_start_new_thread(self):
-    return len([m for m in self.modules if m.thread != None]) < ModuleRunner.MAX_THREADS
-
-  def start_backlog(self):
-    if self.backlog_thread != None or self.backlog.empty(): return
-    self.logger.info('Starting backlog thread...')
-    self.backlog_thread = Thread(target=self.clear_backlog, name='Module-Backlog-Thread')
-    self.backlog_thread.start()
-
-  def clear_backlog(self):
-    while not self.backlog.empty() and not self.closing:
-      if not self.can_start_new_thread:
-        time.sleep(0.5)
-        continue
-      module = self.backlog.get()
-      module()
-    
-    self.logger.info(f"{'' if self.closing else 'Module backlog is empty. '}Stopping backlog thread...")
-    self.backlog_thread = None
   
   def get_modules(self):
     self.modules = []
@@ -71,7 +49,7 @@ class ModuleRunner:
       elif not Module.is_valid(module.export):
         self.bad_modules.append((filename.split(os.path.sep)[-2], 'Exported module is invalid'))
       else:
-        self.modules.append(Module(self, module.export))
+        self.init_module(module.export)
     
     for module_name, reason in self.bad_modules:
       self.logger.warning(f'Installed module `{module_name}` cannot be loaded: {reason}')
@@ -81,9 +59,9 @@ class ModuleRunner:
       self.run_module(module)
 
   def run_module(self, module):
-    if self.can_start_new_thread:
-      module()
-    else:
-      self.logger.warning(f'Max module threads reached. Adding `{module.name}` to backlog...')
-      self.backlog.put(module)
-      self.start_backlog()
+    self.thread_handler.add_task(module, ThreadTask.RUN)
+  
+  def init_module(self, base_class):
+    module = Module(self, base_class)
+    self.thread_handler.add_task(module, ThreadTask.INIT, -1)
+    self.modules.append(module)

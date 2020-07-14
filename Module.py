@@ -22,16 +22,20 @@ class ModuleStatus:
 class Module:
   def __init__(self, control, base_class):
     self.control = control
-    self.module = base_class(
-      logger=LogManager.create_logger(base_class.NAME),
-      notifications=Notifier
-    )
-    self.name = self.module.NAME
+    self.base_class = base_class
+    self.name = base_class.NAME
+
+    self.module = None
 
     self.latest_run = None
 
     self.status = ModuleStatus.RUNNING
-    self.thread = None
+  
+  def initialise(self):
+    self.module = self.base_class(
+      logger=LogManager.create_logger(self.name),
+      notifications=Notifier
+    )
   
   @property
   def time_since_last_run(self):
@@ -39,21 +43,14 @@ class Module:
     return format_timedelta(datetime.now() - self.latest_run)
   
   def should_occur(self, minutes_past):
-    return minutes_past % self.module.OCCUR_EVERY == 0 and self.status == ModuleStatus.RUNNING
-
-  def __call__(self):
-    self.thread = Thread(target=self.run, name=f'Module-Thread ({self.module.NAME})')
-    self.thread.start()
+    return minutes_past % self.base_class.OCCUR_EVERY == 0 and self.status == ModuleStatus.RUNNING
   
   def run(self):
-    self.control.logger.info(f'Running module: {self.module.NAME}')
     try:
       self.latest_run = datetime.now()
       self.module.run()
     except:
-      self.control.logger.error(f'There was an error running module: {self.module.NAME}', exc_info=True)
-    
-    self.thread = None
+      self.control.logger.error(f'There was an error running module: {self.name}', exc_info=True)
 
   @staticmethod
   def is_valid(module):
