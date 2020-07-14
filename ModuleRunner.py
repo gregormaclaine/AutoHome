@@ -5,8 +5,6 @@ from Module import Module
 from ModuleThreadHandler import ModuleThreadHandler, ThreadTask
 
 class ModuleRunner:
-  MAX_THREADS = 3
-
   def __init__(self, parent):
     self.parent = parent
     self.logger = LogManager.create_logger('MODULES')
