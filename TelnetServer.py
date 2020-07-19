@@ -14,9 +14,9 @@ class TelnetServer:
   def __init__(self, parent):
     self.parent = parent
 
-    self.out = TelnetServerOutputController(self)
-
     self.logger = LogManager.create_logger('TELNETSERVER')
+
+    self.out = TelnetServerOutputController(self)
 
     self.conn = None
     self.closing = None  # None | 'server' | 'connection'
@@ -116,6 +116,7 @@ class TelnetServer:
         self.conn, addr = self.socket.accept()
       except OSError:
         break
+      end_conn_record = self.parent.stats.record_connection(addr)
       with self.conn:
         self.send(art.replace('\n', '\n\r') + '\n\n\r')
         self.send(TelnetServer.COMMAND_PREFIX)
@@ -131,4 +132,5 @@ class TelnetServer:
             break
           self.on_receive(data)
       
+      end_conn_record()
       self.logger.info(f'Connection with {addr} has closed')

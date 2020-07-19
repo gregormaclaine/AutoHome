@@ -50,6 +50,11 @@ def quit(octrl, *args):
   """Closes current server connection"""
   pass
 
+@command('telnet', 'list')
+def list_connections(octrl, *args):
+  """Lists all previous telnet connections"""
+  octrl.send(octrl.stats.d_connections.replace('\n', '\n\r') + '\n\r')
+
 @command('modules')
 def modules(octrl, *args):
   """Read & manipulate the installed modules on the server"""
@@ -57,30 +62,8 @@ def modules(octrl, *args):
 
 @command('modules', 'list')
 def list_modules(octrl, *args):
-  """Lists the all modules found and their status"""
-  modules = octrl.server.parent.mr.modules
-  bad_modules = octrl.server.parent.mr.bad_modules
-
-  if len(modules) == 0 and len(bad_modules) == 0:
-    return octrl.send('There are no installed modules\n')
-
-  if len(modules) == 0:
-    octrl.send(f"There are no valid modules installed.\n\r")
-  else:
-    one = len(modules) == 1
-    octrl.send(f"There {'is' if one else 'are'} {len(modules)} valid module{'' if one else 's'} installed:\n\n\r")
-  
-    s = format_columns('  (_) _  | _ | _ |', enumerate(modules),
-      lambda r: r[0] + 1, lambda r: r[1].name, lambda r: r[1].status, lambda r: r[1].time_since_last_run)
-    octrl.send(s + '\n\r')
-  
-  if len(bad_modules) > 0:
-    one = len(bad_modules) == 1
-    octrl.send(f"\nThere {'is' if one else 'are'} {len(bad_modules)} invalid folder{'' if one else 's'} in the modules directory:\n\n\r")
-    
-    s = format_columns('  _  | _', bad_modules,
-      lambda r: r[0], lambda r: r[1])
-    octrl.send(s + '\n\r')
+  """Lists all modules found and their status"""
+  octrl.send(octrl.stats.d_all_modules.replace('\n', '\n\r') + '\n\r')
 
 def change_module_status(octrl, index, status):
   try:
@@ -124,6 +107,7 @@ class TelnetServerOutputController:
     self.send = server.send
     self.confirm = server.confirm
     self.prompt = server.prompt
+    self.stats = server.parent.stats
 
   def handle_command(self, line):
     command, *args = line.split(' ')

@@ -2,6 +2,7 @@ import time, sys
 
 from ModuleRunner import ModuleRunner
 from TelnetServer import TelnetServer
+from StatsController import StatsController
 import LogManager
 
 def has_flags(*flags):
@@ -17,8 +18,9 @@ class Main:
     self.closing = False
 
     self.logger.info('Initialising AutoHome server...')
-    self.server = TelnetServer(self)
     self.mr = ModuleRunner(self)
+    self.stats = StatsController(self)
+    self.server = TelnetServer(self)
 
     self.mainloop()
       
